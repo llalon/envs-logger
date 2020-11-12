@@ -1,0 +1,13 @@
+[Unit]
+Description=Temperature Service
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/pi/envs-logger
+User=pi
+Type=idle
+ExecStart=/usr/bin/python /home/pi/envs-logger/main.py &> /dev/null
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
