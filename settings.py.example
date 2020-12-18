@@ -1,4 +1,18 @@
-SENSOR_LOCATION_NAME = "Bedroom"
+SENSOR_LOCATION_NAME = "Greenhouse Area #1"
 MINUTES_BETWEEN_READS = 5
+
+# CSV settings
+CSV_ENABLED = TRUE
+CSV_LOCATION = '/opt/envs-logger/envs_data.csv'
+
+# ISS API settings
+ISS_ENABLED = TRUE
+BUCKET_NAME = "Temp/Hum"
+BUCKET_KEY = "dht22sensor"
+#ACCESS_KEY = YOUR_API_KEY
+
+# Program logging settings. 
+# VERBOSE = log to file and output to console.
+# NORMAL = log to console only
+PROGRAM_LOG_FILE_ENABLED = "VERBOSE"
 LOG_LOCATION = '/opt/envs-logger/envs.log'
-DATA_LOCATION = '/opt/envs-logger/envs_data.csv'
