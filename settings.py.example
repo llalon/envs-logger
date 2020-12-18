@@ -1,5 +1,5 @@
-SENSOR_LOCATION_NAME = "Bedroom"
-BUCKET_NAME = ":partly_sunny: Room Temperatures"
+SENSOR_LOCATION_NAME = "Greenhouse Area #1"
+BUCKET_NAME = "Temp/Hum"
 BUCKET_KEY = "dht22sensor"
 ACCESS_KEY = YOUR_API_KEY
 MINUTES_BETWEEN_READS = 5
