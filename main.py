@@ -1,14 +1,9 @@
 import time
 import serial
 import logging
+from influxdb import InfluxDBClient
 import settings
-import csv
-
-if (settings.ISS_ENABLED): 
-    from ISStreamer.Streamer import Streamer
-    # init isstreamer account
-    streamer = Streamer(bucket_name=settings.BUCKET_NAME,
-                    bucket_key=settings.BUCKET_KEY, access_key=settings.ACCESS_KEY)
+import datetime
 
 # log file settings
 logging.basicConfig(filename=settings.LOG_LOCATION, encoding='utf-8',
@@ -23,46 +18,43 @@ def log_message(msg):
     print(msg)
 
 
-def log_data(temp, hum, data_path):
-    """ Logs the inputed data to ISS and/or CSV 
+def log_data(temp, hum):
+    """ Logs the inputed data to Influx DB
     temp = temperature data (C)
     hum = humidity data (%)
     data_path = file path to save csv to
     """
-    # Format the data
-    temp = format(temp, ".2f")
-    hum = format(hum, ".2f")
 
-    # log to csv
-    if (settings.CSV_ENABLED):
-        log_message("Recording data to CSV...")
+    dt = datetime.datetime.utcnow()
 
-        with open(settings.CSV_LOCATION, mode='w') as file:
-            data_csv = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            data_csv.writerow([temp, hum])
+    data = [
+        {
+            'measurement': settings.SENSOR_LOCATION_NAME,
+            "time": dt,
+            "fields": {
+                "temperature": format(temp, ".2f"),
+                "humidity": format(hum, ".2f")
+            }
+        }
+    ]
 
-    # log to ISS
-    if (settings.ISS_ENABLED):
-        log_message("Sending data to server (ISS)...")
+    ifclient = InfluxDBClient(settings.INFLUXDB_IP, settings.INFLUXDB_PORT,
+                              settings.INFLUXDB_USER, settings.INFLUXDB_PASS, settings.INFLUXDB_DB)
+    if (ifclient.write_points(data)):
+        return(0)
 
-        streamer.log(settings.SENSOR_LOCATION_NAME +
-                             " Temperature(C)", temp)
-        streamer.log(settings.SENSOR_LOCATION_NAME +
-                         " Humidity(%)", humidity)
-        streamer.flush()
-
-    return(0)
+    return(1)
 
 
-if __name__ == "__main__":
+def main():
     log_message("starting envs-logger...")
 
     # Init serial port to read data from arduino
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
     ser.flush()
 
-    # Set variables to NA (999.0)
-    humidity = temperature = 999.0
+    # Set variables to NA (-999.0)
+    humidity = temperature = -999.0
 
     while True:
         try:
@@ -73,9 +65,6 @@ if __name__ == "__main__":
                     line = ser.readline().decode('utf-8').rstrip()
                     humidity = float(line.split(' ')[1])
                     temperature = float(line.split(' ')[7])
-                    log_message("Readin:: Hum: " +
-                                str(humidity) + ", Temp: " + str(temperature))
-                    log_message("done.")
                     break
                 else:
                     pass
@@ -84,7 +73,7 @@ if __name__ == "__main__":
             continue
 
         # Record data if valid
-        if (humidity != 999.0):
+        if (humidity != -999.0):
             log_message("Recording data...")
 
             # log data
@@ -98,3 +87,7 @@ if __name__ == "__main__":
 
         log_message("waiting for next read...")
         time.sleep(60 * settings.MINUTES_BETWEEN_READS)
+
+
+if __name__ == "__main__":
+    main()
